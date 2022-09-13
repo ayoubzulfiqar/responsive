@@ -1,10 +1,11 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 @immutable
 class Responsive {
- // Device Height = your_device_height
- // Device Width = your_device_width
+// Device Height = 875.428
+// Device Width = 411.428
   final BuildContext context;
   final double deviceHeight;
   final double deviceWidth;
@@ -19,12 +20,12 @@ class Responsive {
 
   // responsive width
   double setWidth({required double width}) {
-    return size.width / (deviceWidth / width);
+    return MediaQuery.of(context).size.width / (deviceWidth / width);
   }
 
   // responsive height
   double setHeight({required double height}) {
-    return size.height / (deviceHeight / height);
+    return MediaQuery.of(context).size.height / (deviceHeight / height);
   }
 
   // responsive font based on Width - it works but not a good solution
@@ -49,7 +50,7 @@ class Responsive {
     return MediaQuery.of(context).padding.bottom + padding;
   }
 
-  // responsive Let Padding
+  // responsive Left Padding
   double setLeftPadding({required double padding}) {
     return MediaQuery.of(context).padding.left + padding;
   }
@@ -62,6 +63,54 @@ class Responsive {
   // responsive top padding
   double setTopPadding({required double padding}) {
     return MediaQuery.of(context).padding.top + padding - 20;
+  }
+
+  //  set padding from all sides
+  double setPadding({required double padding}) {
+    double bottom = MediaQuery.of(context).padding.bottom;
+    double top = MediaQuery.of(context).padding.top;
+    double left = MediaQuery.of(context).padding.left;
+    double right = MediaQuery.of(context).padding.right;
+    return (bottom + top + left + right) + padding;
+  }
+
+  // responsive Bottom Margin
+  double setBottomMargin({required double margin}) {
+    return MediaQuery.of(context).padding.bottom + margin;
+  }
+
+  // responsive Left Margin
+  double setLeftMargin({required double margin}) {
+    return MediaQuery.of(context).padding.left + margin;
+  }
+
+  // responsive right Margin
+  double setRightMargin({required double margin}) {
+    return MediaQuery.of(context).padding.right + margin;
+  }
+
+  // responsive top Margin
+  double setTopMargin({required double margin}) {
+    return MediaQuery.of(context).padding.top + margin;
+  }
+
+  // set margin from all sides
+  double setMargin({required double margin}) {
+    double bottom = MediaQuery.of(context).padding.bottom;
+    double top = MediaQuery.of(context).padding.top;
+    double left = MediaQuery.of(context).padding.left;
+    double right = MediaQuery.of(context).padding.right;
+    return (bottom + top + left + right) + margin;
+  }
+
+  // responsive Width space - forExample in SizedBox
+  double setWidthSpace({required double width}) {
+    return MediaQuery.of(context).size.width / (deviceWidth / width);
+  }
+
+  // responsive height space - forExample in SizedBox
+  double setHeightSpace({required double height}) {
+    return MediaQuery.of(context).size.height / (deviceHeight / height);
   }
 
   // scaling the font size based on scale factor - use for scaling fontSize
@@ -109,6 +158,16 @@ class Responsive {
         (deviceHeight / heightWithoutSafeArea) -
         padding.top -
         kToolbarHeight;
+  }
+
+  // Use can use this to set Radius from all sides
+  // as well as from only one side
+  double setRadius({required double radius}) {
+    final double sWidth = MediaQuery.of(context).size.width;
+    final double sHeight = MediaQuery.of(context).size.height;
+    final scaleH = sHeight / deviceHeight;
+    final scaleW = sWidth / deviceWidth;
+    return radius * min(scaleW, scaleH);
   }
 
   // for different values such as the using this you can pass even a widget
@@ -160,5 +219,5 @@ class Responsive {
   // getting full width
   static double getWidth(BuildContext context) =>
       MediaQuery.of(context).size.width;
-
 }
+
