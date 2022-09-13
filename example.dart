@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:responsiveness/app_config.dart';
 import 'package:responsiveness/responsive.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,8 +17,9 @@ class _HomePageState extends State<HomePage> {
   double deviceHeight = 690;
   double deviceWidth = 360;
 
-  // to set orientation
-  getOrientation() {
+  @override
+  Widget build(BuildContext context) {
+     // to set and orientation
     Orientation currentOrientation = MediaQuery.of(context).orientation;
     if (currentOrientation == Orientation.portrait) {
       setState(() {
@@ -30,10 +30,7 @@ class _HomePageState extends State<HomePage> {
         deviceHeight = MediaQuery.of(context).size.width;
       });
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
     Responsive rs = Responsive(
       context: context,
       deviceHeight: deviceHeight,
@@ -54,13 +51,26 @@ class _HomePageState extends State<HomePage> {
               width: rs.setWidth(width: 100),
               height: rs.setHeight(height: 200),
               alignment: Alignment.center,
-              color: Colors.black,
+              decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.all(
+                      Radius.circular(rs.setRadius(radius: 20)))),
               child: Text(
                 "H",
                 style: TextStyle(
                     fontSize: rs.setFontSize(fontSize: 20),
                     color: Colors.white),
               ),
+            ),
+            SizedBox(
+              height: rs.setHeightSpace(height: 20),
+            ),
+            Container(
+              width: 100,
+              height: 200,
+              decoration: const BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.all(Radius.circular(20))),
             ),
             Container(
               width: rs.setWidth(width: 100),
