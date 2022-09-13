@@ -35,6 +35,8 @@ import 'package:flutter/material.dart';
 
 @immutable
 class Responsive {
+// Device Height = 875.428
+// Device Width = 411.428
   final BuildContext context;
   final double deviceHeight;
   final double deviceWidth;
@@ -49,12 +51,12 @@ class Responsive {
 
   // responsive width
   double setWidth({required double width}) {
-    return size.width / (deviceWidth / width);
+    return MediaQuery.of(context).size.width / (deviceWidth / width);
   }
 
   // responsive height
   double setHeight({required double height}) {
-    return size.height / (deviceHeight / height);
+    return MediaQuery.of(context).size.height / (deviceHeight / height);
   }
 
   // responsive font based on Width - it works but not a good solution
@@ -79,7 +81,7 @@ class Responsive {
     return MediaQuery.of(context).padding.bottom + padding;
   }
 
-  // responsive Let Padding
+  // responsive Left Padding
   double setLeftPadding({required double padding}) {
     return MediaQuery.of(context).padding.left + padding;
   }
@@ -92,6 +94,54 @@ class Responsive {
   // responsive top padding
   double setTopPadding({required double padding}) {
     return MediaQuery.of(context).padding.top + padding - 20;
+  }
+
+  //  set padding from all sides
+  double setPadding({required double padding}) {
+    double bottom = MediaQuery.of(context).padding.bottom;
+    double top = MediaQuery.of(context).padding.top;
+    double left = MediaQuery.of(context).padding.left;
+    double right = MediaQuery.of(context).padding.right;
+    return (bottom + top + left + right) + padding;
+  }
+
+  // responsive Bottom Margin
+  double setBottomMargin({required double margin}) {
+    return MediaQuery.of(context).padding.bottom + margin;
+  }
+
+  // responsive Left Margin
+  double setLeftMargin({required double margin}) {
+    return MediaQuery.of(context).padding.left + margin;
+  }
+
+  // responsive right Margin
+  double setRightMargin({required double margin}) {
+    return MediaQuery.of(context).padding.right + margin;
+  }
+
+  // responsive top Margin
+  double setTopMargin({required double margin}) {
+    return MediaQuery.of(context).padding.top + margin;
+  }
+
+  // set margin from all sides
+  double setMargin({required double margin}) {
+    double bottom = MediaQuery.of(context).padding.bottom;
+    double top = MediaQuery.of(context).padding.top;
+    double left = MediaQuery.of(context).padding.left;
+    double right = MediaQuery.of(context).padding.right;
+    return (bottom + top + left + right) + margin;
+  }
+
+  // responsive Width space - forExample in SizedBox
+  double setWidthSpace({required double width}) {
+    return MediaQuery.of(context).size.width / (deviceWidth / width);
+  }
+
+  // responsive height space - forExample in SizedBox
+  double setHeightSpace({required double height}) {
+    return MediaQuery.of(context).size.height / (deviceHeight / height);
   }
 
   // scaling the font size based on scale factor - use for scaling fontSize
@@ -139,6 +189,16 @@ class Responsive {
         (deviceHeight / heightWithoutSafeArea) -
         padding.top -
         kToolbarHeight;
+  }
+  
+  // Use can use this to set Radius from all sides
+  // as well as from only one side
+  double setRadius({required double radius}) {
+    final double sWidth = MediaQuery.of(context).size.width;
+    final double sHeight = MediaQuery.of(context).size.height;
+    final scaleH = sHeight / deviceHeight;
+    final scaleW = sWidth / deviceWidth;
+    return radius * min(scaleW, scaleH);
   }
 
   // for different values such as the using this you can pass even a widget
@@ -190,29 +250,58 @@ class Responsive {
   // getting full width
   static double getWidth(BuildContext context) =>
       MediaQuery.of(context).size.width;
-
 }
-
-```
-
-### Final Step - Implementation & Example
-
-Initialize this under the BuildContext above the
-Scaffold
-Note:- the device height and device width is mentioned above you can pass it as variable
-
-```dart
-    Responsive rs = Responsive(
-      context: context,
-      deviceHeight: deviceHeight,
-      deviceWidth: deviceWidth,
-    );
 ```
 
 ### Example
 
 ```dart
-Column(
+import 'package:flutter/material.dart';
+import 'package:responsiveness/responsive.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // -- this is  my app screens that i was working on
+  // double deviceHeight = 875.428;
+  // double deviceWidth = 411.428;
+
+  // default size for every type of app
+  double deviceHeight = 690;
+  double deviceWidth = 360;
+
+  // to set and orientation
+
+  @override
+  Widget build(BuildContext context) {
+    Orientation currentOrientation = MediaQuery.of(context).orientation;
+    if (currentOrientation == Orientation.portrait) {
+      setState(() {
+        deviceHeight = MediaQuery.of(context).size.height;
+      });
+    } else {
+      setState(() {
+        deviceHeight = MediaQuery.of(context).size.width;
+      });
+    }
+
+    Responsive rs = Responsive(
+      context: context,
+      deviceHeight: deviceHeight,
+      deviceWidth: deviceWidth,
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Responsiveness"),
+      ),
+      body: Center(
+        child: Column(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -221,13 +310,26 @@ Column(
               width: rs.setWidth(width: 100),
               height: rs.setHeight(height: 200),
               alignment: Alignment.center,
-              color: Colors.black,
+              decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.all(
+                      Radius.circular(rs.setRadius(radius: 20)))),
               child: Text(
                 "H",
                 style: TextStyle(
                     fontSize: rs.setFontSize(fontSize: 20),
                     color: Colors.white),
               ),
+            ),
+            SizedBox(
+              height: rs.setHeightSpace(height: 20),
+            ),
+            Container(
+              width: 100,
+              height: 200,
+              decoration: const BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.all(Radius.circular(20))),
             ),
             Container(
               width: rs.setWidth(width: 100),
@@ -245,7 +347,6 @@ Column(
               width: 100,
               height: 100,
               alignment: Alignment.center,
-              // color will also change
               color: rs.getResponsiveValue(
                 forLargeScreen: Colors.red,
                 forTabletScreen: Colors.pink,
@@ -254,7 +355,6 @@ Column(
                 forMobLandScapeMode: Colors.blue,
                 context: context,
               ),
-              // text will change according to screen Sizes but it is only necessary in case of web
               child: Text(
                 rs.getResponsiveValue(
                     context: context,
@@ -267,6 +367,10 @@ Column(
             ),
           ],
         ),
+      ),
+    );
+  }
+}
 ```
 
 ### Orientation
