@@ -8,7 +8,7 @@ Making app responsive is very important for every developer. Using MediaQuery yo
 
 ### Step - 1
 
-First you have to find out how you can find out yu device size -width as well as -height.
+First you have to find out how you can find out your device size `width` as well as `height`.
 Using this print statement you can get your device size in you terminal.
 
 ```dart
@@ -282,7 +282,7 @@ class _HomePageState extends State<HomePage> {
     Orientation currentOrientation = MediaQuery.of(context).orientation;
     if (currentOrientation == Orientation.portrait) {
       setState(() {
-        deviceHeight = MediaQuery.of(context).size.height;
+        deviceWidth = MediaQuery.of(context).size.height;
       });
     } else {
       setState(() {
@@ -379,7 +379,7 @@ class _HomePageState extends State<HomePage> {
     Orientation currentOrientation = MediaQuery.of(context).orientation;
     if (currentOrientation == Orientation.portrait) {
       setState(() {
-        deviceHeight = MediaQuery.of(context).size.height;
+        deviceWidth = MediaQuery.of(context).size.height;
       });
     } else {
       setState(() {
