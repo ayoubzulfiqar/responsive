@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
     Orientation currentOrientation = MediaQuery.of(context).orientation;
     if (currentOrientation == Orientation.portrait) {
       setState(() {
-        deviceHeight = MediaQuery.of(context).size.height;
+        deviceWidth = MediaQuery.of(context).size.height;
       });
     } else {
       setState(() {
