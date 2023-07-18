@@ -1,392 +1,144 @@
-# Responsiveness
 
-A Responsive Mobile app Using MediaQuery
+# Responsive UI in Flutter: Step-by-Step Implementation
 
-## Introduction
+In this article, we will explore how to create a responsive UI in Flutter using the provided code. We'll cover the basics of responsive design, introduce the `Responsive` class, and demonstrate how to use it to create responsive widgets in Flutter. By the end of this article, you'll have a clear understanding of how to make your Flutter apps adapt to different screen sizes and orientations.
 
-Making app responsive is very important for every developer. Using MediaQuery you can make app responsive to every screen sizes.
+## What is Responsive Design?
 
-### Step - 1
+Responsive design is an approach to web and app development that ensures the user interface (UI) adjusts and looks great on various screen sizes and devices. With the increasing number of device types and screen resolutions, responsive design has become essential to provide a seamless user experience.
 
-First you have to find out how you can find out your device size `width` as well as `height`.
-Using this print statement you can get your device size in you terminal.
+In Flutter, responsive design involves using flexible and adaptive layouts and widgets that can adjust their size and position based on the available screen real estate.
 
-```dart
-    print("Height: ${MediaQuery.of(context).size.height}, Width: ${MediaQuery.of(context).size.width}");
-```
+## The `Responsive` Class
 
-#### Note:- if you don't wanna use this method to find height and width you  can use default values
+The provided code includes a `Responsive` class, which encapsulates various methods to help create responsive UIs in Flutter. Let's go through the code step-by-step and understand its functionality.
 
-```dart
-  double deviceHeight = 690;
-  double deviceWidth = 360;
-```
+### Step 1: Importing Dependencies
 
-### Step - 2
-
-Create a file responsive.dart in lib folder
-put this code inside your file.
+The code starts with importing the required Flutter packages, mainly the `flutter/material.dart` package.
 
 ```dart
-
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+```
 
+### Step 2: Defining the `Responsive` Class
+
+The `Responsive` class is defined as an immutable class with several properties and methods to handle responsiveness.
+
+```dart
 @immutable
 class Responsive {
-// Device Height = 875.428
-// Device Width = 411.428
   final BuildContext context;
   final double deviceHeight;
   final double deviceWidth;
-
-  const Responsive({
-    required this.context,
-    required this.deviceHeight,
-    required this.deviceWidth,
-  });
-  // general size
-  Size get size => MediaQuery.of(context).size;
-
-  // responsive width
-  double setWidth({required double width}) {
-    return MediaQuery.of(context).size.width / (deviceWidth / width);
-  }
-
-  // responsive height
-  double setHeight({required double height}) {
-    return MediaQuery.of(context).size.height / (deviceHeight / height);
-  }
-
-  // responsive font based on Width - it works but not a good solution
-  // double setFontSize({required double fontSize}) {
-  //   return size.width / (deviceWidth / fontSize);
-  // }
-
-  // don't use it
-  double setTextScaleFactor({required double textScaleFactor}) {
-    return MediaQuery.of(context).textScaleFactor / textScaleFactor;
-  }
-
-  // remove padding all
-  MediaQueryData removeAllPadding() => MediaQuery.of(context).removePadding(
-      removeLeft: true, removeRight: true, removeBottom: true, removeTop: true);
-
-  // set devicePixel ration
-  double setDevicePixelRatio() => MediaQuery.of(context).devicePixelRatio;
-
-  // responsive bottom padding
-  double setBottomPadding({required double padding}) {
-    return MediaQuery.of(context).padding.bottom + padding;
-  }
-
-  // responsive Left Padding
-  double setLeftPadding({required double padding}) {
-    return MediaQuery.of(context).padding.left + padding;
-  }
-
-  // responsive right padding
-  double setRightPadding({required double padding}) {
-    return MediaQuery.of(context).padding.right + padding;
-  }
-
-  // responsive top padding
-  double setTopPadding({required double padding}) {
-    return MediaQuery.of(context).padding.top + padding - 20;
-  }
-
-  //  set padding from all sides
-  double setPadding({required double padding}) {
-    double bottom = MediaQuery.of(context).padding.bottom;
-    double top = MediaQuery.of(context).padding.top;
-    double left = MediaQuery.of(context).padding.left;
-    double right = MediaQuery.of(context).padding.right;
-    return (bottom + top + left + right) + padding;
-  }
-
-  // responsive Bottom Margin
-  double setBottomMargin({required double margin}) {
-    return MediaQuery.of(context).padding.bottom + margin;
-  }
-
-  // responsive Left Margin
-  double setLeftMargin({required double margin}) {
-    return MediaQuery.of(context).padding.left + margin;
-  }
-
-  // responsive right Margin
-  double setRightMargin({required double margin}) {
-    return MediaQuery.of(context).padding.right + margin;
-  }
-
-  // responsive top Margin
-  double setTopMargin({required double margin}) {
-    return MediaQuery.of(context).padding.top + margin;
-  }
-
-  // set margin from all sides
-  double setMargin({required double margin}) {
-    double bottom = MediaQuery.of(context).padding.bottom;
-    double top = MediaQuery.of(context).padding.top;
-    double left = MediaQuery.of(context).padding.left;
-    double right = MediaQuery.of(context).padding.right;
-    return (bottom + top + left + right) + margin;
-  }
-
-  // responsive Width space - forExample in SizedBox
-  double setWidthSpace({required double width}) {
-    return MediaQuery.of(context).size.width / (deviceWidth / width);
-  }
-
-  // responsive height space - forExample in SizedBox
-  double setHeightSpace({required double height}) {
-    return MediaQuery.of(context).size.height / (deviceHeight / height);
-  }
-
-  // scaling the font size based on scale factor - use for scaling fontSize
-  double setFontSize({required double fontSize}) {
-    final double sWidth = MediaQuery.of(context).size.width;
-    final double sHeight = MediaQuery.of(context).size.height;
-    // if i divide the deviceHeight / sHeight.. than the font will adjust it's self inside box
-    // but in blow case it is working only the font size.
-    final scaleH = sHeight / deviceHeight;
-    final scaleW = sWidth / deviceWidth;
-    final double scale = max(scaleW, scaleH);
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
-    return fontSize * scale * textScaleFactor;
-  }
-
-  double setHeightWithoutSafeArea({required double heightWithoutSafeArea}) {
-    EdgeInsets padding = MediaQuery.of(context).viewPadding;
-    double height = size.height;
-    return height -
-        (deviceHeight / heightWithoutSafeArea) -
-        padding.top -
-        padding.bottom;
-  }
-
-  double setWidthWithoutSafeArea({required double heightWithoutSafeArea}) {
-    EdgeInsets padding = MediaQuery.of(context).viewPadding;
-    double width = size.width;
-    return width -
-        (deviceHeight / heightWithoutSafeArea) -
-        padding.top -
-        padding.bottom;
-  }
-
-  double setHeightWithoutStatusBar({required double heightWithoutSafeArea}) {
-    EdgeInsets padding = MediaQuery.of(context).viewPadding;
-    double height = size.height;
-    return height - (deviceHeight / heightWithoutSafeArea) - padding.top;
-  }
-
-  double setHeightWithoutStatusBarToolbar(
-      {required double heightWithoutSafeArea}) {
-    EdgeInsets padding = MediaQuery.of(context).viewPadding;
-    double height = size.height;
-    return height -
-        (deviceHeight / heightWithoutSafeArea) -
-        padding.top -
-        kToolbarHeight;
-  }
-  
-  // Use can use this to set Radius from all sides
-  // as well as from only one side
-  double setRadius({required double radius}) {
-    final double sWidth = MediaQuery.of(context).size.width;
-    final double sHeight = MediaQuery.of(context).size.height;
-    final scaleH = sHeight / deviceHeight;
-    final scaleW = sWidth / deviceWidth;
-    return radius * min(scaleW, scaleH);
-  }
-
-  // for different values such as the using this you can pass even a widget
-  getResponsiveValue({
-    dynamic forShortScreen,
-    dynamic forMediumScreen,
-    dynamic forLargeScreen,
-    dynamic forMobLandScapeMode,
-    dynamic forTabletScreen,
-    required BuildContext context,
-  }) {
-    if (isLargeScreen(context)) {
-      return forLargeScreen ?? forShortScreen;
-    } else if (isMediumScreen(context)) {
-      return forMediumScreen ?? forShortScreen;
-    } else if (isTabletScreen(context)) {
-      return forTabletScreen ?? forMediumScreen ?? forShortScreen;
-    } else if (isSmallScreen(context) && isLandScapeMode(context)) {
-      return forMobLandScapeMode ?? forShortScreen;
-    } else {
-      return forShortScreen;
-    }
-  }
-
-  isLandScapeMode(BuildContext context) {
-    if (MediaQuery.of(context).orientation == Orientation.landscape) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  static bool isLargeScreen(BuildContext context) {
-    return getWidth(context) > 1200;
-  }
-
-  static bool isSmallScreen(BuildContext context) {
-    return getWidth(context) < 800;
-  }
-
-  static bool isMediumScreen(BuildContext context) {
-    return getWidth(context) > 800 && getWidth(context) < 1200;
-  }
-
-  static bool isTabletScreen(BuildContext context) {
-    return getWidth(context) > 450 && getWidth(context) < 800;
-  }
-
-  // getting full width
-  static double getWidth(BuildContext context) =>
-      MediaQuery.of(context).size.width;
+  // ...
 }
 ```
 
-### Example
+The class contains three properties:
+
+- `context`: A required parameter of type `BuildContext` that represents the context in which the widget is built.
+- `deviceHeight`: A `double` value representing the height of the device's screen.
+- `deviceWidth`: A `double` value representing the width of the device's screen.
+
+### Step 3: Singleton Pattern Implementation
+
+The class includes a static instance variable `_instance` and a private constructor `_()` to implement the Singleton pattern. This ensures that there is only one instance of the `Responsive` class throughout the application.
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:responsiveness/responsive.dart';
+static Responsive? _instance;
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+Responsive._({required this.context})
+    : deviceHeight = MediaQuery.sizeOf(context).height,
+      deviceWidth = MediaQuery.sizeOf(context).width;
 
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  // -- this is  my app screens that i was working on
-  // double deviceHeight = 875.428;
-  // double deviceWidth = 411.428;
-
-  // default size for every type of app
-  double deviceHeight = 690;
-  double deviceWidth = 360;
-
-  // to set and orientation
-
-  @override
-  Widget build(BuildContext context) {
-    Orientation currentOrientation = MediaQuery.of(context).orientation;
-    if (currentOrientation == Orientation.portrait) {
-      setState(() {
-        deviceWidth = MediaQuery.of(context).size.height;
-      });
-    } else {
-      setState(() {
-        deviceHeight = MediaQuery.of(context).size.width;
-      });
-    }
-
-    Responsive rs = Responsive(
-      context: context,
-      deviceHeight: deviceHeight,
-      deviceWidth: deviceWidth,
-    );
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Responsiveness"),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: rs.setWidth(width: 100),
-              height: rs.setHeight(height: 200),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.all(
-                      Radius.circular(rs.setRadius(radius: 20)))),
-              child: Text(
-                "H",
-                style: TextStyle(
-                    fontSize: rs.setFontSize(fontSize: 20),
-                    color: Colors.white),
-              ),
-            ),
-            SizedBox(
-              height: rs.setHeightSpace(height: 20),
-            ),
-            Container(
-              width: 100,
-              height: 200,
-              decoration: const BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.all(Radius.circular(20))),
-            ),
-            Container(
-              width: rs.setWidth(width: 100),
-              height: rs.setHeight(height: 200),
-              alignment: Alignment.center,
-              color: Colors.blue,
-              child: Text(
-                "ScalerPixel",
-                style: TextStyle(
-                    fontSize: rs.setFontSize(fontSize: 20),
-                    color: Colors.white),
-              ),
-            ),
-            Container(
-              width: 100,
-              height: 100,
-              alignment: Alignment.center,
-              color: rs.getResponsiveValue(
-                forLargeScreen: Colors.red,
-                forTabletScreen: Colors.pink,
-                forMediumScreen: Colors.green,
-                forShortScreen: Colors.yellow,
-                forMobLandScapeMode: Colors.blue,
-                context: context,
-              ),
-              child: Text(
-                rs.getResponsiveValue(
-                    context: context,
-                    forLargeScreen: 'LargeScreen',
-                    forShortScreen: 'ShortScreen',
-                    forMediumScreen: 'MediumScreen',
-                    forTabletScreen: 'Tablet',
-                    forMobLandScapeMode: 'LandScape'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+factory Responsive.getInstance({
+  required BuildContext context,
+}) {
+  _instance ??= Responsive._(
+    context: context,
+  );
+  return _instance!;
 }
 ```
 
-### Orientation
+### Why MediaQuery.sizeOf(context) not MediaQuery.of(context).size
+
+| Feature | `MediaQuery.sizeOf(context)` | `MediaQuery.of(context).size` |
+|---|---|---|
+| When does it rebuild? | Only when the size of the media changes | Whenever the MediaQueryData changes |
+| What does it return? | The size of the media at the time of the last rebuild | The size of the media at the time of the call |
+| Performance | More performant, as it only rebuilds when necessary | Less performant, as it rebuilds more often |
+
+In general, you should use `MediaQuery.sizeOf(context)` if you only care about the size of the media, and you don't want your widget to rebuild unnecessarily. You should use `MediaQuery.of(context).size` if you need to know the size of the media at all times, even if it doesn't change.
+
+The `getInstance` factory method is used to retrieve the instance of the `Responsive` class. It takes the `BuildContext` as a required parameter and returns the existing instance if it already exists or creates a new one otherwise.
+
+### Step 4: Helper Methods for Responsiveness
+
+The `Responsive` class provides various helper methods to handle responsiveness:
+
+- `screenSize`: Returns a `Size` object representing the size of the screen.
+- `screenPadding`: Returns an `EdgeInsets` object representing the padding of the screen.
+- `setWidth`: Calculates the width of a widget based on the device's width and the desired width.
+- `setHeight`: Calculates the height of a widget based on the device's height and the desired height.
+- `setFontSize`: Scales the font size based on the device's screen size and text scale factor.
+
+The class also includes methods to handle padding and margin calculations from all sides, as well as specific sides (left, right, top, bottom).
+
+### Step 5: Extensions for Concise Usage
+
+To make the usage of the `Responsive` class more concise and readable, the code includes several extension methods. These extensions allow you to call the responsiveness methods directly on numerical values (e.g., `double`, `int`).
+
+For example, instead of calling:
 
 ```dart
-    Orientation currentOrientation = MediaQuery.of(context).orientation;
-    if (currentOrientation == Orientation.portrait) {
-      setState(() {
-        deviceWidth = MediaQuery.of(context).size.height;
-      });
-    } else {
-      setState(() {
-        deviceHeight = MediaQuery.of(context).size.width;
-      });
-    }
+Responsive.getInstance(context: context).setWidth(width: 20);
 ```
 
-This is not  perfect solution because a lot of factors we have to consider like LayoutBuilder and AspectRation and OrientationBuilder and Constraints and also few things we need to take care of based on Platform.
-But this is a most basic and fast way to make thing work. I hope it helps.
+You can use the extension method:
+
+```dart
+20.sW(context);
+```
+
+The code includes extensions for width, height, text scale factor, device pixel ratio, font size, padding, margin, radius, and more.
+
+### Step 6: Implementing Responsive Widgets
+
+To create a responsive UI using the `Responsive` class, follow these steps:
+
+1. Import the file where the `Responsive` class is defined.
+
+```dart
+import 'responsive.dart';
+```
+
+1. Use the `responsive` instance to make your widgets responsive by using the helper methods or the provided extensions.
+
+```dart
+Container(
+  width: 100.sW(context),
+  height: 50.sH(context),
+  padding: 10.sP(context),
+  margin: 20.sM(context),
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(10.sR(context)),
+    color: Colors.blue,
+  ),
+  child: Text(
+    'Responsive Container',
+    style: TextStyle(fontSize: 20.sF(context)),
+  ),
+)
+```
+
+By utilizing the `Responsive` class and extensions, you can ensure that your widgets adapt to various screen sizes and devices automatically.
+
+## Conclusion
+
+In this article, we learned about responsive design and explored how to implement a responsive UI in Flutter using the provided `Responsive` class. By using this class and the extensions, you can easily make your widgets adapt to different screen sizes and providing a seamless user experience across various devices.
+
+## Declaimer
+
+Orientation Implementation Coming Soon
