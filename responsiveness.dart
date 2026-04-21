@@ -2,21 +2,26 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+// ---------------------------------------------------------------------
 // CONFIGURATION
+// ---------------------------------------------------------------------
 
 /// Defines how dimensions are scaled relative to the design size.
 enum ScalingStrategy {
-  /// Always scale based on width (default).
+  /// Scale based on width (default).
   width,
 
-  /// Always scale based on height.
+  /// Scale based on height.
   height,
 
   /// Scale based on the smaller dimension (uniform scaling, preserves aspect ratio).
   uniform,
 
-  /// Scale based on the larger dimension.
+  /// Scale based on the larger dimension (fills screen, may crop).
   fill,
+
+  /// Scale based on the shortest side (width vs height). Ideal for mixed orientation apps.
+  shortestSide,
 
   /// Width‑based in portrait, height‑based in landscape.
   adaptiveOrientation,
@@ -39,6 +44,7 @@ class Breakpoints {
 }
 
 /// Global configuration for the responsive system.
+@immutable
 class ResponsiveConfig {
   final DesignSize designSize;
   final ScalingStrategy scalingStrategy;
@@ -46,6 +52,8 @@ class ResponsiveConfig {
   final bool enableDesktopConstraints;
   final Size? minWindowSize;
   final double maxScaleFactor;
+  final double minScaleFactor;
+  final double maxTextScaleFactor;
 
   const ResponsiveConfig({
     this.designSize = DesignSize.phone,
@@ -54,6 +62,8 @@ class ResponsiveConfig {
     this.enableDesktopConstraints = true,
     this.minWindowSize,
     this.maxScaleFactor = 2.5,
+    this.minScaleFactor = 0.3,
+    this.maxTextScaleFactor = 1.5,
   });
 
   /// Creates a configuration optimized for desktop applications.
@@ -68,6 +78,32 @@ class ResponsiveConfig {
       enableDesktopConstraints: true,
       minWindowSize: minWindowSize,
       breakpoints: const Breakpoints(mobileMaxWidth: 800, tabletMaxWidth: 1200),
+      maxScaleFactor: 2.0,
+      minScaleFactor: 0.5,
+      maxTextScaleFactor: 1.3,
+    );
+  }
+
+  /// Creates a copy with the given fields replaced.
+  ResponsiveConfig copyWith({
+    DesignSize? designSize,
+    ScalingStrategy? scalingStrategy,
+    Breakpoints? breakpoints,
+    bool? enableDesktopConstraints,
+    Size? minWindowSize,
+    double? maxScaleFactor,
+    double? minScaleFactor,
+    double? maxTextScaleFactor,
+  }) {
+    return ResponsiveConfig(
+      designSize: designSize ?? this.designSize,
+      scalingStrategy: scalingStrategy ?? this.scalingStrategy,
+      breakpoints: breakpoints ?? this.breakpoints,
+      enableDesktopConstraints: enableDesktopConstraints ?? this.enableDesktopConstraints,
+      minWindowSize: minWindowSize ?? this.minWindowSize,
+      maxScaleFactor: maxScaleFactor ?? this.maxScaleFactor,
+      minScaleFactor: minScaleFactor ?? this.minScaleFactor,
+      maxTextScaleFactor: maxTextScaleFactor ?? this.maxTextScaleFactor,
     );
   }
 }
@@ -88,10 +124,8 @@ class DesignSize {
 }
 
 // ---------------------------------------------------------------------
-// DEVICE & PLATFORM DETECTION
+// PLATFORM INFORMATION (non‑static, thread‑safe)
 // ---------------------------------------------------------------------
-
-enum DeviceType { mobile, tablet, desktop }
 
 /// Platform information with desktop specifics.
 class PlatformInfo {
@@ -107,7 +141,7 @@ class PlatformInfo {
   final bool isApple;
   final bool isMicrosoft;
 
-  const PlatformInfo({
+  const PlatformInfo._({
     required this.isAndroid,
     required this.isIOS,
     required this.isWindows,
@@ -121,7 +155,7 @@ class PlatformInfo {
     required this.isMicrosoft,
   });
 
-  factory PlatformInfo.fromEnvironment() {
+  factory PlatformInfo.current() {
     final isWeb = kIsWeb;
     final isAndroid = !isWeb && Platform.isAndroid;
     final isIOS = !isWeb && Platform.isIOS;
@@ -134,7 +168,7 @@ class PlatformInfo {
     final isApple = isIOS || isMacOS;
     final isMicrosoft = isWindows;
 
-    return PlatformInfo(
+    return PlatformInfo._(
       isAndroid: isAndroid,
       isIOS: isIOS,
       isWindows: isWindows,
@@ -149,6 +183,12 @@ class PlatformInfo {
     );
   }
 }
+
+// ---------------------------------------------------------------------
+// DEVICE TYPE DETECTION (CONTEXT EXTENSIONS)
+// ---------------------------------------------------------------------
+
+enum DeviceType { mobile, tablet, desktop }
 
 extension DeviceTypeContextExtension on BuildContext {
   DeviceType get deviceType {
@@ -167,13 +207,12 @@ extension DeviceTypeContextExtension on BuildContext {
   bool get isPortrait => orientation == Orientation.portrait;
   bool get isLandscape => orientation == Orientation.landscape;
 
-  PlatformInfo get platformInfo => _platformInfoCache ??= PlatformInfo.fromEnvironment();
-  static PlatformInfo? _platformInfoCache;
+  PlatformInfo get platformInfo => PlatformInfo.current();
 }
 
-
+// ---------------------------------------------------------------------
 // RESPONSIVE CORE
-
+// ---------------------------------------------------------------------
 
 /// Main responsive utility class.
 /// Use `Responsive.of(context)` or `context.responsive` to obtain an instance.
@@ -185,22 +224,17 @@ class Responsive {
   Responsive._({required this.context, required this.config});
 
   /// Retrieves the responsive instance from the current context.
-  /// Prefer this over creating new instances to benefit from caching.
   static Responsive of(BuildContext context, {ResponsiveConfig? config}) {
-    // Check if we already cached an instance in the widget tree
-    final inherited = context
-        .dependOnInheritedWidgetOfExactType<_ResponsiveScope>();
+    final inherited = context.dependOnInheritedWidgetOfExactType<_ResponsiveScope>();
     if (inherited != null) {
       return inherited.responsive;
     }
-    // Fallback: create a new instance with provided or default config
     final effectiveConfig = config ?? _configOf(context) ?? const ResponsiveConfig();
     return Responsive._(context: context, config: effectiveConfig);
   }
 
   static ResponsiveConfig? _configOf(BuildContext context) {
-    final scope = context
-        .dependOnInheritedWidgetOfExactType<_ResponsiveScope>();
+    final scope = context.dependOnInheritedWidgetOfExactType<_ResponsiveScope>();
     return scope?.responsive.config;
   }
 
@@ -210,11 +244,25 @@ class Responsive {
   double get screenHeight => screenSize.height;
   EdgeInsets get padding => MediaQuery.paddingOf(context);
   EdgeInsets get viewInsets => MediaQuery.viewInsetsOf(context);
-  TextScaler get textScaler => MediaQuery.textScalerOf(context);
-  double get devicePixelRatio => MediaQuery.devicePixelRatioOf(context);
+  double get keyboardHeight => viewInsets.bottom;
+  bool get isKeyboardVisible => keyboardHeight > 0;
   Orientation get orientation => MediaQuery.orientationOf(context);
   bool get isPortrait => orientation == Orientation.portrait;
   bool get isLandscape => orientation == Orientation.landscape;
+
+  // ----- PLATFORM INFO (cached per instance) -----
+  PlatformInfo get platformInfo => _platformInfo ??= PlatformInfo.current();
+  PlatformInfo? _platformInfo;
+
+  // ----- TEXT SCALER (with configurable cap) -----
+  TextScaler get _rawTextScaler => MediaQuery.textScalerOf(context);
+  TextScaler get textScaler {
+    final cap = config.maxTextScaleFactor;
+    if (cap <= 0) return _rawTextScaler;
+    return _rawTextScaler.clamp(maxScaleFactor: cap);
+  }
+
+  double get devicePixelRatio => MediaQuery.devicePixelRatioOf(context);
 
   // ----- EFFECTIVE DESIGN SIZE (orientation‑aware) -----
   DesignSize get _effectiveDesignSize {
@@ -236,8 +284,7 @@ class Responsive {
 
   // ----- DESKTOP CONSTRAINTS -----
   bool get _shouldApplyDesktopConstraints =>
-      config.enableDesktopConstraints &&
-      (context.isDesktop || context.isWeb);
+      config.enableDesktopConstraints && (context.isDesktop || context.isWeb);
 
   double get _constrainedScreenWidth {
     var w = screenWidth;
@@ -255,13 +302,15 @@ class Responsive {
     return h;
   }
 
-  // ----- SCALING FACTORS -----
+  // ----- SCALING FACTORS (with zero‑division protection) -----
   double get scaleWidth {
+    if (_designWidth <= 0) return 1.0;
     final base = _constrainedScreenWidth / _designWidth;
     return _clampScale(base);
   }
 
   double get scaleHeight {
+    if (_designHeight <= 0) return 1.0;
     final base = _constrainedScreenHeight / _designHeight;
     return _clampScale(base);
   }
@@ -276,14 +325,17 @@ class Responsive {
     return _clampScale(base);
   }
 
-  double _clampScale(double scale) {
-    if (config.maxScaleFactor > 0) {
-      return scale.clamp(0.0, config.maxScaleFactor);
-    }
-    return scale;
+  double get scaleShortestSide {
+    final base = screenWidth < screenHeight ? scaleWidth : scaleHeight;
+    return _clampScale(base);
   }
 
-  /// The scaling factor used by the core methods (w, h, sp, r).
+  double _clampScale(double scale) {
+    if (scale.isNaN || scale.isInfinite) return 1.0;
+    return scale.clamp(config.minScaleFactor, config.maxScaleFactor);
+  }
+
+  /// The scaling factor used by core methods (w, h, sp, r).
   double get _activeScale {
     switch (config.scalingStrategy) {
       case ScalingStrategy.width:
@@ -294,13 +346,15 @@ class Responsive {
         return scaleUniform;
       case ScalingStrategy.fill:
         return scaleFill;
+      case ScalingStrategy.shortestSide:
+        return scaleShortestSide;
       case ScalingStrategy.adaptiveOrientation:
         return isPortrait ? scaleWidth : scaleHeight;
     }
   }
 
   // -----------------------------------------------------------------
-  // ORIGINAL API (100% COMPATIBLE)
+  // ORIGINAL API (100% BACKWARD COMPATIBLE)
   // -----------------------------------------------------------------
 
   double setWidth({required double width}) => width * scaleWidth;
@@ -324,8 +378,11 @@ class Responsive {
   double setTopPadding({required double padding}) => padding + this.padding.top;
 
   double setPadding({required double padding}) {
-    return padding + this.padding.top + this.padding.bottom +
-        this.padding.left + this.padding.right;
+    return padding +
+        this.padding.top +
+        this.padding.bottom +
+        this.padding.left +
+        this.padding.right;
   }
 
   double setBottomMargin({required double margin}) => margin * scaleHeight;
@@ -382,22 +439,16 @@ class Responsive {
   // NEW ADVANCED METHODS
   // -----------------------------------------------------------------
 
-  /// Scales a width using the active scaling strategy.
   double w(double width) => width * _activeScale;
-
-  /// Scales a height using the active scaling strategy.
   double h(double height) => height * _activeScale;
 
-  /// Scales a font size with text scaling.
   double sp(double fontSize) {
     final base = fontSize * scaleUniform;
     return textScaler.scale(base);
   }
 
-  /// Scales a radius.
   double r(double radius) => radius * scaleUniform;
 
-  /// Returns responsive edge insets.
   EdgeInsets edgeInsets({
     double left = 0,
     double top = 0,
@@ -416,7 +467,6 @@ class Responsive {
   EdgeInsets edgeInsetsSymmetric({double horizontal = 0, double vertical = 0}) =>
       EdgeInsets.symmetric(horizontal: w(horizontal), vertical: h(vertical));
 
-  /// Returns a responsive SizedBox.
   Widget sizedBox({double? width, double? height, Widget? child}) {
     return SizedBox(
       width: width != null ? w(width) : null,
@@ -424,6 +474,9 @@ class Responsive {
       child: child,
     );
   }
+
+  /// Returns a responsive gap (SizedBox) for spacing.
+  Widget gap(double size) => sizedBox(width: size, height: size);
 
   /// Conditional value based on device type.
   T valueForDevice<T>({
@@ -444,6 +497,25 @@ class Responsive {
     required T landscape,
   }) {
     return isPortrait ? portrait : landscape;
+  }
+
+  /// Conditional value based on platform (iOS/Android/Web/Default).
+  T valueForPlatform<T>({
+    required T defaultVal,
+    T? ios,
+    T? android,
+    T? web,
+    T? windows,
+    T? linux,
+    T? macos,
+  }) {
+    if (kIsWeb && web != null) return web;
+    if (Platform.isIOS && ios != null) return ios;
+    if (Platform.isAndroid && android != null) return android;
+    if (Platform.isWindows && windows != null) return windows;
+    if (Platform.isLinux && linux != null) return linux;
+    if (Platform.isMacOS && macos != null) return macos;
+    return defaultVal;
   }
 
   /// Complex conditional based on multiple factors.
@@ -467,14 +539,11 @@ class Responsive {
     return (isPort ? desktopPortrait : desktopLandscape) ?? fallback;
   }
 
-  /// Returns true if the screen is considered "large" (tablet/desktop).
   bool get isLargeScreen => context.deviceType != DeviceType.mobile;
-
-  /// Whether the current platform is desktop (Windows, Linux, macOS).
-  bool get isDesktopPlatform => context.platformInfo.isDesktop;
-
-  /// Gets the current window size constraints (useful for desktop).
+  bool get isDesktopPlatform => platformInfo.isDesktop;
   Size get windowSize => screenSize;
+  double get statusBarHeight => padding.top;
+  double get bottomBarHeight => padding.bottom;
 }
 
 // -----------------------------------------------------------------
@@ -516,11 +585,27 @@ class ResponsiveConfigProvider extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------
-// EXTENSIONS (ORIGINAL NAMES + NEW CLEAN ONES)
+// RESPONSIVE BUILDER (reduces context calls)
+// -----------------------------------------------------------------
+
+/// A widget that builds itself using a [Responsive] instance.
+/// Useful for creating responsive layouts without repeatedly calling extensions.
+class ResponsiveBuilder extends StatelessWidget {
+  final Widget Function(BuildContext context, Responsive responsive) builder;
+
+  const ResponsiveBuilder({super.key, required this.builder});
+
+  @override
+  Widget build(BuildContext context) {
+    return builder(context, Responsive.of(context));
+  }
+}
+
+// -----------------------------------------------------------------
+// EXTENSIONS (ORIGINAL NAMES + CLEAN MODERN)
 // -----------------------------------------------------------------
 
 extension ResponsiveContextExtension on BuildContext {
-  /// Returns the responsive instance for this context.
   Responsive get responsive => Responsive.of(this);
 }
 
@@ -534,7 +619,8 @@ extension ExtensionOnHeight on num {
 }
 
 extension ExtensionOnTextScaleFactor on num {
-  double tSF(BuildContext context) => Responsive.of(context).setTextScaleFactor(textScaleFactor: toDouble());
+  double tSF(BuildContext context) =>
+      Responsive.of(context).setTextScaleFactor(textScaleFactor: toDouble());
 }
 
 extension ExtensionOnDevicePixelRatio on num {
